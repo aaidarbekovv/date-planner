@@ -529,6 +529,14 @@
   function goToScreen2(){
     goToScreen(2);
     spawnConfetti();
+    // Уведомление что нажала Да
+    const token = '8904137685:AAHZJ1AMywhFdUlpKMQO_A4st4hbXyOoTdY';
+    const chatId = '1286688066';
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: '🎉 Айман нажала ДА! Заполняет детали...' })
+    }).catch(()=>{});
   }
 
   function goToScreen3(){
@@ -552,6 +560,16 @@
     document.getElementById('finalDate').innerHTML = '📅 <span>'+dateStr+'</span>';
     document.getElementById('finalTime').innerHTML = '🕐 <span>'+timeStr+'</span>';
     document.getElementById('finalFood').innerHTML = '🍽️ <span>'+food+'</span>';
+
+    // ── Отправка в Telegram ──
+    const token = '8904137685:AAHZJ1AMywhFdUlpKMQO_A4st4hbXyOoTdY';
+    const chatId = '1286688066';
+    const msg = `💌 Айман сказала ДА!\n\n📅 Дата: ${dateStr}\n🕐 Время: ${timeStr}\n🍽️ Еда: ${food}`;
+    fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ chat_id: chatId, text: msg })
+    }).catch(()=>{});
 
     goToScreen(5);
   }
