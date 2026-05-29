@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>свидание 💌</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pink: #d63865;
+    --pink-light: #f4a7bb;
+    --pink-pale: #fce8f0;
+    --bg: #f9f4f6;
+    --text: #2a1520;
+    --card: #ffffff;
+    --gray-heart: #c8bfc3;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow: hidden;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-bar {
+    position: fixed;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .progress-bar.visible { opacity: 1; }
+  .progress-bar .heart {
+    font-size: 20px;
+    filter: grayscale(1) opacity(0.4);
+    transition: all 0.5s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .progress-bar .heart.active {
+    filter: none;
+    transform: scale(1.2);
+  }
+  .progress-bar .line {
+    width: 36px;
+    height: 2px;
+    background: var(--pink-light);
+    border-radius: 2px;
+  }
+
+  /* ── SCREENS ── */
+  .screen {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.5s, transform 0.5s;
+    transform: translateY(30px);
+  }
+  .screen.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+  }
+  .screen.exit {
+    opacity: 0;
+    transform: translateY(-30px);
+  }
+
+  /* ── FLOATING HEARTS background ── */
+  .hearts-bg {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 0;
+  }
+  .float-heart {
+    position: absolute;
+    font-size: 18px;
+    opacity: 0.12;
+    animation: floatUp linear infinite;
+  }
+  @keyframes floatUp {
+    0% { transform: translateY(110vh) rotate(0deg); opacity: 0.12; }
+    100% { transform: translateY(-10vh) rotate(30deg); opacity: 0; }
+  }
+
+  /* ── TYPOGRAPHY ── */
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(2rem, 6vw, 3.2rem);
+    font-weight: 900;
+    color: var(--pink);
+    text-align: center;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  h2 {
+    font-family: 'Fraunces', serif;
+    font-size: clamp(1.6rem, 5vw, 2.6rem);
+    font-weight: 900;
+    color: var(--pink);
+    text-align: center;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .subtitle {
+    font-size: 0.95rem;
+    color: #8a7080;
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  /* ── EMOJI BIG ── */
+  .big-emoji {
+    font-size: 70px;
+    margin-bottom: 24px;
+    animation: bounceIn 0.7s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  @keyframes bounceIn {
+    0% { transform: scale(0); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* ── BUTTONS ── */
+  .btn-yes {
+    background: var(--pink);
+    color: white;
+    border: none;
+    border-radius: 50px;
+    padding: 16px 48px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 6px 24px rgba(214,56,101,0.35);
+    position: relative;
+    z-index: 10;
+  }
+  .btn-yes:hover {
+    transform: scale(1.05);
+    box-shadow: 0 10px 30px rgba(214,56,101,0.45);
+  }
+  .btn-yes:active { transform: scale(0.97); }
+
+  .btn-no {
+    background: white;
+    color: #a08090;
+    border: 1.5px solid #e8d8df;
+    border-radius: 50px;
+    padding: 14px 36px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    font-weight: 400;
+    cursor: pointer;
+    position: fixed;
+    z-index: 999;
+    transition: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    user-select: none;
+  }
+
+  /* ── SCREEN 1: YES/NO ── */
+  #screen1 .buttons-row {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    margin-top: 8px;
+  }
+
+  /* ── SCREEN 2: YOU SAID YES ── */
+  #screen2 .confetti-area {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 50;
+  }
+  .confetti-piece {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    top: -20px;
+    animation: confettiFall linear forwards;
+    border-radius: 2px;
+  }
+  @keyframes confettiFall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* ── SCREEN 3: DATE/TIME ── */
+  .card {
+    background: var(--card);
+    border-radius: 24px;
+    padding: 32px 28px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 8px 40px rgba(214,56,101,0.1);
+  }
+  .card-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .field-label {
+    font-size: 0.85rem;
+    color: #a08090;
+    margin-bottom: 6px;
+  }
+  .field-input {
+    width: 100%;
+    border: 1.5px solid #f0e0e8;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    color: var(--text);
+    background: #fdf8fa;
+    outline: none;
+    transition: border-color 0.2s;
+    margin-bottom: 16px;
+  }
+  .field-input:focus { border-color: var(--pink-light); }
+  .field-select {
+    width: 100%;
+    border: 1.5px solid #f0e0e8;
+    border-radius: 12px;
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    color: var(--text);
+    background: #fdf8fa;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23d63865' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+  }
+
+  /* ── SCREEN 4: FOOD ── */
+  .food-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 460px;
+    margin-bottom: 28px;
+  }
+  .food-card {
+    background: white;
+    border-radius: 16px;
+    padding: 18px 8px 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: all 0.25s cubic-bezier(0.34,1.56,0.64,1);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+    user-select: none;
+  }
+  .food-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(214,56,101,0.15); }
+  .food-card.selected {
+    border-color: var(--pink);
+    background: var(--pink-pale);
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(214,56,101,0.25);
+  }
+  .food-card .food-emoji { font-size: 38px; }
+  .food-card .food-name { font-size: 0.82rem; color: #6a5060; font-weight: 500; }
+
+  /* ── SCREEN 5: FINAL ── */
+  #screen5 .final-card {
+    background: white;
+    border-radius: 28px;
+    padding: 36px 32px;
+    text-align: center;
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 12px 50px rgba(214,56,101,0.15);
+  }
+  .final-detail {
+    background: var(--pink-pale);
+    border-radius: 12px;
+    padding: 12px 18px;
+    margin: 8px 0;
+    font-size: 0.95rem;
+    color: var(--text);
+  }
+  .final-detail span { color: var(--pink); font-weight: 600; }
+
+  /* ── PULSE ANIMATION for envelope ── */
+  .envelope-anim {
+    display: inline-block;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1) rotate(-2deg); }
+    50% { transform: scale(1.08) rotate(2deg); }
+  }
+
+  /* ── WIGGLE for NO button ── */
+  @keyframes wiggle {
+    0%,100% { transform: rotate(0deg); }
+    25% { transform: rotate(-8deg) scale(0.95); }
+    75% { transform: rotate(8deg) scale(0.95); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Floating hearts background -->
+<div class="hearts-bg" id="heartsBg"></div>
+
+<!-- Progress bar -->
+<div class="progress-bar" id="progressBar">
+  <span class="heart" id="h1">💗</span>
+  <div class="line"></div>
+  <span class="heart" id="h2">🩶</span>
+  <div class="line"></div>
+  <span class="heart" id="h3">🩶</span>
+  <div class="line"></div>
+  <span class="heart" id="h4">🩶</span>
+</div>
+
+<!-- SCREEN 1 -->
+<div class="screen active" id="screen1">
+  <div class="big-emoji envelope-anim">💌</div>
+  <h1>Айман! Ты пойдёшь<br>со мной на свидание?</h1>
+  <div class="buttons-row">
+    <button class="btn-yes" onclick="goToScreen2()">Да ✨</button>
+  </div>
+</div>
+
+<!-- SCREEN 2 -->
+<div class="screen" id="screen2">
+  <div class="confetti-area" id="confettiArea"></div>
+  <div class="big-emoji">🎉</div>
+  <h2>Что?? Ты сказала да??&nbsp;🫢</h2>
+  <p class="subtitle">подожди, мне нужна минута чтобы осознать это</p>
+  <button class="btn-yes" onclick="goToScreen3()">окей окей! →</button>
+</div>
+
+<!-- SCREEN 3 -->
+<div class="screen" id="screen3">
+  <div class="card">
+    <div class="card-header">
+      <div style="font-size:32px;margin-bottom:10px;">📖 🐾</div>
+      <h2 style="font-size:1.8rem;">Так... когда ты свободна?</h2>
+    </div>
+    <div class="field-label">Выбери день ✨</div>
+    <input class="field-input" type="date" id="dateInput" />
+    <div class="field-label">Во сколько? 🙈</div>
+    <select class="field-select" id="timeInput">
+      <option value="">Выбери время...</option>
+      <option value="17:00">17:00 — ужинаем с пенсионерами 👴</option>
+      <option value="18:00">18:00 — самый правильный ответ, честно</option>
+      <option value="19:00">19:00 — уже хочу есть, если что</option>
+      <option value="20:00">20:00 — это ужин или завтрак?</option>
+      <option value="21:00">21:00 — ночные приключения 🌙</option>
+    </select>
+    <button class="btn-yes" style="width:100%;margin-top:8px;" onclick="goToScreen4()">дальше! →</button>
+  </div>
+</div>
+
+<!-- SCREEN 4 -->
+<div class="screen" id="screen4">
+  <h2>Что будем есть? 🍴✨</h2>
+  <p class="subtitle">(можно выбрать несколько)</p>
+  <div class="food-grid">
+    <div class="food-card" onclick="toggleFood(this,'Пицца')">
+      <span class="food-emoji">🍕</span>
+      <span class="food-name">Пицца</span>
+    </div>
+    <div class="food-card" onclick="toggleFood(this,'Суши')">
+      <span class="food-emoji">🍣</span>
+      <span class="food-name">Суши</span>
+    </div>
+    <div class="food-card" onclick="toggleFood(this,'Бургеры')">
+      <span class="food-emoji">🍔</span>
+      <span class="food-name">Бургеры</span>
+    </div>
+    <div class="food-card" onclick="toggleFood(this,'Паста')">
+      <span class="food-emoji">🍝</span>
+      <span class="food-name">Паста</span>
+    </div>
+    <div class="food-card" onclick="toggleFood(this,'Хинкали')">
+      <span class="food-emoji">🥟</span>
+      <span class="food-name">Хинкали</span>
+    </div>
+    <div class="food-card" onclick="toggleFood(this,'Рамен')">
+      <span class="food-emoji">🍜</span>
+      <span class="food-name">Рамен</span>
+    </div>
+  </div>
+  <button class="btn-yes" onclick="goToScreen5()">вот это! →</button>
+</div>
+
+<!-- SCREEN 5 -->
+<div class="screen" id="screen5">
+  <div class="final-card">
+    <div style="font-size:60px;margin-bottom:16px;" class="envelope-anim">💝</div>
+    <h2 style="margin-bottom:6px;">это свидание!!</h2>
+    <p class="subtitle" style="margin-bottom:20px;">не могу дождаться 🥺</p>
+    <div class="final-detail" id="finalDate">📅 <span>—</span></div>
+    <div class="final-detail" id="finalTime">🕐 <span>—</span></div>
+    <div class="final-detail" id="finalFood">🍽️ <span>—</span></div>
+    <button class="btn-yes" style="margin-top:20px;width:100%;" onclick="restart()">сначала 🔄</button>
+  </div>
+</div>
+
+<!-- NO button (fixed, runs away) -->
+<button class="btn-no" id="btnNo" onmouseenter="runAway()" onclick="runAway()">Нет</button>
+
+<script>
+  // ── State ──
+  let currentScreen = 1;
+  let selectedFoods = [];
+  let noClickCount = 0;
+
+  // ── Floating hearts ──
+  const hb = document.getElementById('heartsBg');
+  const hearts = ['💕','💗','🩷','✨','💖','🌸'];
+  for(let i=0;i<14;i++){
+    const h = document.createElement('div');
+    h.className = 'float-heart';
+    h.textContent = hearts[Math.floor(Math.random()*hearts.length)];
+    h.style.left = Math.random()*100+'%';
+    h.style.animationDuration = (8+Math.random()*12)+'s';
+    h.style.animationDelay = (-Math.random()*20)+'s';
+    h.style.fontSize = (12+Math.random()*16)+'px';
+    hb.appendChild(h);
+  }
+
+  // ── Position No button next to Yes button initially ──
+  const btnNo = document.getElementById('btnNo');
+  let hasRunAway = false;
+
+  function placeNextToYes() {
+    const btnYes = document.querySelector('.btn-yes');
+    const rect = btnYes.getBoundingClientRect();
+    btnNo.style.transition = 'none';
+    btnNo.style.left = (rect.right + 16) + 'px';
+    btnNo.style.top = (rect.top + rect.height / 2) + 'px';
+    btnNo.style.transform = 'translateY(-50%)';
+  }
+
+  // Place after DOM is ready
+  window.addEventListener('load', placeNextToYes);
+
+  function positionNoBtn(xPct, yPct){
+    btnNo.style.left = xPct+'%';
+    btnNo.style.top = yPct+'%';
+    btnNo.style.transform = 'translate(-50%,-50%)';
+  }
+
+  // ── Run away logic ──
+  let runTimeout;
+  function runAway(){
+    clearTimeout(runTimeout);
+    hasRunAway = true;
+    noClickCount++;
+    const margin = 12;
+    const x = margin + Math.random()*(100-2*margin);
+    const y = margin + Math.random()*(100-2*margin);
+    btnNo.style.transition = 'left 0.35s cubic-bezier(0.34,1.56,0.64,1), top 0.35s cubic-bezier(0.34,1.56,0.64,1), font-size 0.3s';
+    positionNoBtn(x, y);
+    // Shrink over time
+    const size = Math.max(0.5, 1 - noClickCount*0.06);
+    btnNo.style.fontSize = size+'rem';
+    btnNo.style.opacity = Math.max(0.3, 1 - noClickCount*0.04);
+    if(noClickCount >= 8){
+      btnNo.style.transition += ', opacity 0.5s';
+      btnNo.style.opacity = '0';
+      btnNo.style.pointerEvents = 'none';
+    }
+  }
+
+  // ── Screen navigation ──
+  function goToScreen(n){
+    const prev = document.getElementById('screen'+currentScreen);
+    prev.classList.remove('active');
+    prev.classList.add('exit');
+    setTimeout(()=>{ prev.classList.remove('exit'); }, 600);
+
+    currentScreen = n;
+    const next = document.getElementById('screen'+n);
+    next.classList.add('active');
+
+    updateProgress(n);
+
+    // Hide No button after screen 1
+    if(n > 1){
+      btnNo.style.opacity = '0';
+      btnNo.style.pointerEvents = 'none';
+    }
+  }
+
+  function updateProgress(n){
+    const pb = document.getElementById('progressBar');
+    if(n <= 1){ pb.classList.remove('visible'); return; }
+    pb.classList.add('visible');
+    const map = {2:0, 3:1, 4:2, 5:3};
+    const active = map[n] ?? 0;
+    for(let i=1;i<=4;i++){
+      const h = document.getElementById('h'+i);
+      if(i-1 <= active){ h.classList.add('active'); h.textContent='💗'; }
+      else { h.classList.remove('active'); h.textContent='🩶'; }
+    }
+  }
+
+  function goToScreen2(){
+    goToScreen(2);
+    spawnConfetti();
+  }
+
+  function goToScreen3(){
+    goToScreen(3);
+    // Set default date to tomorrow
+    const t = new Date(); t.setDate(t.getDate()+1);
+    document.getElementById('dateInput').value = t.toISOString().split('T')[0];
+  }
+
+  function goToScreen4(){ goToScreen(4); }
+
+  function goToScreen5(){
+    // Collect data
+    const d = document.getElementById('dateInput').value;
+    const ti = document.getElementById('timeInput');
+    const food = selectedFoods.length ? selectedFoods.join(', ') : 'сюрприз!';
+
+    const dateStr = d ? new Date(d).toLocaleDateString('ru-RU',{weekday:'long',month:'long',day:'numeric'}) : 'не выбрано';
+    const timeStr = ti.options[ti.selectedIndex]?.text || 'не выбрано';
+
+    document.getElementById('finalDate').innerHTML = '📅 <span>'+dateStr+'</span>';
+    document.getElementById('finalTime').innerHTML = '🕐 <span>'+timeStr+'</span>';
+    document.getElementById('finalFood').innerHTML = '🍽️ <span>'+food+'</span>';
+
+    goToScreen(5);
+  }
+
+  function toggleFood(el, name){
+    el.classList.toggle('selected');
+    if(el.classList.contains('selected')){ selectedFoods.push(name); }
+    else { selectedFoods = selectedFoods.filter(f=>f!==name); }
+  }
+
+  function restart(){
+    noClickCount = 0;
+    hasRunAway = false;
+    selectedFoods = [];
+    btnNo.style.opacity = '1';
+    btnNo.style.pointerEvents = 'auto';
+    btnNo.style.fontSize = '1rem';
+    goToScreen(1);
+    document.getElementById('progressBar').classList.remove('visible');
+    // Re-place next to Yes after transition
+    setTimeout(placeNextToYes, 600);
+  }
+
+  // ── Confetti ──
+  function spawnConfetti(){
+    const area = document.getElementById('confettiArea');
+    area.innerHTML = '';
+    const colors = ['#d63865','#f4a7bb','#ffcf77','#9de8c4','#a0c4ff','#ffd6e0'];
+    for(let i=0;i<60;i++){
+      const p = document.createElement('div');
+      p.className = 'confetti-piece';
+      p.style.left = Math.random()*100+'%';
+      p.style.background = colors[Math.floor(Math.random()*colors.length)];
+      p.style.width = (6+Math.random()*8)+'px';
+      p.style.height = (6+Math.random()*8)+'px';
+      p.style.borderRadius = Math.random()>0.5 ? '50%' : '2px';
+      p.style.animationDuration = (1.5+Math.random()*2)+'s';
+      p.style.animationDelay = (Math.random()*0.8)+'s';
+      area.appendChild(p);
+    }
+    setTimeout(()=>{ area.innerHTML=''; }, 4000);
+  }
+</script>
+</body>
+</html>
